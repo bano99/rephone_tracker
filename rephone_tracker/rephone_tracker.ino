@@ -12,10 +12,9 @@
 #define SPP_SVR "Rocket_BLE" // it is the server's visible name, customize it yourself.
 #define ard_log Serial.printf
 
-#define PHONENR  "004367683839397"
 
 /*
-    GPS Tracker
+    GPS Tracker  conte
     By Denis Banovic @ 30-5-2016
     
    This program is for the Traceable Dog Collar Application that is 
@@ -83,17 +82,13 @@ void loop() {
     }
     
     
-    // sobald gsm und gps online, einmalig SMS schicken
-    if(sent_ok < 4 && LVoiceCall.ready()){
-      if((LGPS.get_position_fix() > 0) && get_position()){
-        if(LGPS.get_sate_used() > 0 ) {
-          if(sent_ok ==3) {
-            if(send_ok()){
-               sent_ok = 5;
-            }
-          } else {
-             delay(2000); // we want to have a fix for at least 3x in 6 seconds!
-             sent_ok++;
+        // sobald gsm und gps online, einmalig SMS schicken
+    if(!sent_ok && LVoiceCall.ready()){
+      if(LGPS.get_position_fix() && get_position()){
+        if((int)LGPS.get_sate_used() > 3) {
+          if(send_ok()){
+            sent_ok = 1;
+            delay(100000);
           }
         }
       }
@@ -119,7 +114,7 @@ void loop() {
 //        VM_GSM_SIM_ID = vm_gsm_sim_get_active_sim_card();
 //        sprintf(bt_update, "GSM_%d_%d_GPS_%c_%c", LVoiceCall.ready(), (char*)status, LGPS.get_position_fix(), LGPS.get_sate_used());
 //        sprintf(bt_update, "GSM_%d_%d_GPS_%c_%c", LVoiceCall.ready(), network_found, LGPS.get_position_fix(), LGPS.get_sate_used());
-        sprintf(bt_update, "GSM_%d_GPS_%c_%c", LVoiceCall.ready(), LGPS.get_position_fix(), LGPS.get_sate_used());
+        sprintf(bt_update, "G_%d_GPS_%c_%d", LVoiceCall.ready(), LGPS.get_position_fix(), (int)LGPS.get_sate_used());
         restart_bt_server(bt_update);
     }
     
@@ -179,7 +174,7 @@ int send_position(){
 int send_ok(){
   
   if(LSMS.ready()) {
-          LSMS.beginSMS(PHONENR);
+          LSMS.beginSMS("004367683839397");
           LSMS.print(buffer);
           Serial.println(buffer);                    
           if(LSMS.endSMS()){ 
@@ -188,7 +183,6 @@ int send_ok(){
             return 1;
           }  else {
             Serial.println("SMS send fail!");
-            return 0;
           }
    } else {
      Serial.println("SMS no ready!");
@@ -213,9 +207,9 @@ int get_position(){
   
   if(LGPS.check_online()) {
       utc_date_time = LGPS.get_utc_date_time();
-      sprintf(buffer, "UTC:%d-%d-%d %d:%d:%d,\r\n%c:%f,\r\n%c:%f,\r\nALT:%f,\r\nSpeed:%f,\r\nAkku:%d, Chrging: %d, fix:%c, sat:%c", 
+      sprintf(buffer, "UTC:%d-%d-%d %d:%d:%d,\r\n%c:%f,\r\n%c:%f,\r\nALT:%d,\r\nSpeed:%f,\r\nAkku:%d, fix:%c, sat:%d", 
                        utc_date_time[0], utc_date_time[1], utc_date_time[2], utc_date_time[3], utc_date_time[4],utc_date_time[5], 
-                       LGPS.get_ns(), LGPS.get_latitude(), LGPS.get_ew(), LGPS.get_longitude(), LGPS.get_altitude(), LGPS.get_speed(), batteryLlevel, batterycharging, LGPS.get_position_fix(), LGPS.get_sate_used());
+                       LGPS.get_ns(), LGPS.get_latitude(), LGPS.get_ew(), LGPS.get_longitude(), (int)LGPS.get_altitude(), LGPS.get_speed(), batteryLlevel, LGPS.get_position_fix(), (int)LGPS.get_sate_used());
 //      Serial.println(buffer);
       Serial.println("debug-2");
 
